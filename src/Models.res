@@ -1,11 +1,13 @@
-type kingStatus =
-| King
-| Normal
+module Player = {
+  type t = White | Red | Empty;
 
-type player =
-| White(kingStatus)
-| Red(kingStatus)
-| Empty;
+  let toString = player =>
+    switch player {
+      | Red => "Red"
+      | White => "White"
+      | Empty => ""
+    }
+}
 
 module BoardCell = {
   type cellState =
@@ -17,14 +19,14 @@ module BoardCell = {
     id: string,
     x: int,
     y: int,
-    player: player,
+    player: Player.t,
     cellState: cellState,
   }
 
   let make = (
     ~x: int,
     ~y: int,
-    ~player: player=Empty,
+    ~player: Player.t=Empty,
     ~cellState: cellState=Default,
     ()
   ): t => {
@@ -62,8 +64,8 @@ module Board = {
     ->Js.Array2.map(y => {
       let row = BoardRow.make(~index=y)
       switch y {
-        | 0|1|2 => row(~player=Red(Normal), ())
-        | 5|6|7 => row(~player=White(Normal), ())
+        | 0|1|2 => row(~player=Red, ())
+        | 5|6|7 => row(~player=White, ())
         | _ => row(~player=Empty, ())
       }
     })
@@ -71,12 +73,12 @@ module Board = {
       id, cells
     }: BoardRow.t))
 
-  let isMoveOnBoard = ((x, y)) => switch((x, y)) {
-    | (-1, _)|(_, -1) => false
-    | (x, _) when x === boardSize => false
-    | (_, y) when y === boardSize => false
-    | (_) => true
-  }
+  // let isMoveOnBoard = ((x, y)) => switch((x, y)) {
+  //   | (-1, _)|(_, -1) => false
+  //   | (x, _) when x === boardSize => false
+  //   | (_, y) when y === boardSize => false
+  //   | (_) => true
+  // }
 
   // let findCellById = (checkerBoard: t, id) =>
   //   checkerBoard
@@ -103,14 +105,9 @@ module Board = {
 }
 
 module Game = {
-  type gameState = Playing(player) | Winner(player);
   type t = {
     board: Board.t,
-    state: gameState,
   }
 
-  let make = _ => {
-    board: Board.make(),
-    state: Playing(Red(Normal)),
-  }
+  let make = _ => Board.make()
 }
