@@ -21,16 +21,15 @@ module State = {
 
   let selectBoardCell = (state, boardCell: BoardCell.t) => {
     let {x: cellX, y: cellY} = boardCell
-    {
-      gameBoard: state.gameBoard->Js.Array2.map((boardRow: BoardRow.t) => {
-        ...boardRow,
-        cells: boardRow.cells->Js.Array2.map((cell: BoardCell.t) => {
-          switch (cell.x, cell.y, cell.cellState) {
-            | (curX, curY, Default) when cellX == curX && cellY == curY => {...cell, cellState: Selected}
-            | _ => {...cell, cellState: Default}
-          }
-        })
-      }),
+    state.gameBoard->Js.Array2.map((boardRow: BoardRow.t) => {
+      ...boardRow,
+      cells: boardRow.cells->Js.Array2.map((cell: BoardCell.t) => {
+        switch (cell.x, cell.y, cell.cellState) {
+          | (curX, curY, Default) when cellX == curX && cellY == curY => {...cell, cellState: Selected}
+          | _ => {...cell, cellState: Default}
+        }
+      })
+    })
       // gameBoard: state.gameBoard->Js.Array2.map((boardRow: BoardRow.t) => {
       //   boardRow.id != cellY ? boardRow : {
       //     ...boardRow,
@@ -42,18 +41,20 @@ module State = {
       //     })
       //   }
       // }),
-      gameState: switch (state.gameState, boardCell.player) {
-        | (Playing(White), Red)|(Playing(Red), White) => state.gameState
-        | (Playing(Red), _) => Playing(White)
-        | (Playing(White), _) => Playing(Red)
-        | _ => state.gameState
-      }
-    }
+      // gameState: switch (state.gameState, boardCell.player) {
+      //   | (Playing(White), Red)|(Playing(Red), White) => state.gameState
+      //   | (Playing(Red), _) => Playing(White)
+      //   | (Playing(White), _) => Playing(Red)
+      //   | _ => state.gameState
+      // }
   }
 
   let reducer = (state, action) => {
     switch action {
-      | SelectBoardCell(boardCell) => selectBoardCell(state, boardCell)
+      | SelectBoardCell(boardCell) => switch (state.gameState, boardCell.player) {
+          | (Playing(White), Red)|(Playing(Red), White) => state
+          | _ => { ...state, gameBoard: selectBoardCell(state, boardCell) }
+      }
       | ResetGame => {
         gameState: Playing(Red),
         gameBoard: Board.make(),

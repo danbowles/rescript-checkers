@@ -12,6 +12,7 @@ module Player = {
 module BoardCell = {
   type cellState =
   | Default
+  | Draggable
   | Selected
   | ValidMove
   | ValidJump(array<(int, int)>);
@@ -45,12 +46,14 @@ module BoardRow = {
     cells: array<BoardCell.t>
   }
 
-  let make = (~index, ~player, ()) =>
+  let make = (~index, ~currentPlayer: Player.t, ~player, ()) =>
     Belt.Array.makeBy(rowSize, i=>i)
     ->Js.Array2.map(x => {
+      let cellState = currentPlayer == player ? BoardCell.Draggable : Default
+      let makeCell = BoardCell.make(~x, ~y=index, ~cellState)
       switch (mod(x, 2), mod(index, 2)) {
-      | (0, 1)|(1, 0) => BoardCell.make(~x, ~y=index, ~player, ())
-      | _ => BoardCell.make(~x, ~y=index, ~player=Empty, ())
+      | (0, 1)|(1, 0) => makeCell(~player, ())
+      | _ => makeCell(~player=Empty, ())
       }
     })
 }
@@ -59,10 +62,10 @@ module Board = {
   let boardSize = 8;
   type t = array<BoardRow.t>
 
-  let make = _ =>
+  let make = (~currentPlayer=Player.Red, ()) =>
     Belt.Array.makeBy(boardSize, i=>i)
     ->Js.Array2.map(y => {
-      let row = BoardRow.make(~index=y)
+      let row = BoardRow.make(~index=y, ~currentPlayer)
       switch y {
         | 0|1|2 => row(~player=Red, ())
         | 5|6|7 => row(~player=White, ())
